@@ -34,6 +34,10 @@ Actions 실행 화면의 Artifacts 에 `ApkExtractor-debug` 로 올립니다. �
 - 로컬: 위 4개 값을 환경 변수 `APKVAULT_KEYSTORE_FILE`(키 파일 경로), `APKVAULT_KEYSTORE_PASSWORD`,
   `APKVAULT_KEY_ALIAS`, `APKVAULT_KEY_PASSWORD` 로 주고 `./gradlew bundleRelease`
 
+## 개인정보처리방침
+- `docs/privacy/index.html` (한국어·영어) — GitHub Pages: Settings → Pages → Deploy from a branch → `main` / `docs`
+- 주소: https://jeongguskbag-prog.github.io/apk-extractor/privacy/
+
 ## 출시 전 할 일
 - Play Console 에 `QUERY_ALL_PACKAGES` 사용 신고, 데이터 보안 양식(수집 없음)
 - 유료 앱으로 생성(무료로 올린 뒤에는 유료로 바꿀 수 없음)
