@@ -6,10 +6,12 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -35,13 +37,23 @@ class MainActivity : AppCompatActivity() {
     private var showSystem = false
     private var sort = Sort.NAME
     private var busy = false
-    private var pendingSave: AppEntry? = null
+    private var pendingSave: List<AppEntry> = emptyList()
+
+    /** 여러 앱 선택 모드에서 고른 앱 (패키지 이름, 고른 순서 유지) */
+    private val selected = LinkedHashSet<String>()
+    private val selecting get() = selected.isNotEmpty()
+
+    // 선택 모드에서 뒤로가기 → 선택 해제
+    private val backToList = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() = clearSelection()
+    }
 
     // 안드로이드 9 이하에서만 쓰는 저장소 권한 요청
     private val storagePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        val app = pendingSave
-        pendingSave = null
-        if (granted && app != null) save(app) else if (app != null) snack(getString(R.string.storage_permission_needed))
+        val apps = pendingSave
+        pendingSave = emptyList()
+        if (apps.isEmpty()) return@registerForActivityResult
+        if (granted) save(apps) else snack(getString(R.string.storage_permission_needed))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,8 +61,15 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
+        binding.toolbar.setNavigationOnClickListener { clearSelection() }
+        onBackPressedDispatcher.addCallback(this, backToList)
 
-        adapter = AppAdapter(packageManager, lifecycleScope) { app -> showActions(app) }
+        adapter = AppAdapter(
+            packageManager,
+            lifecycleScope,
+            onClick = { app -> if (selecting) toggle(app) else showActions(app) },
+            onLongClick = { app -> toggle(app) },
+        )
         binding.list.layoutManager = LinearLayoutManager(this)
         binding.list.adapter = adapter
         loadApps()
@@ -71,6 +90,9 @@ class MainActivity : AppCompatActivity() {
             val apps = withContext(Dispatchers.IO) { AppRepository.load(applicationContext) }
             allApps = apps
             if (!busy) binding.progress.visibility = View.GONE
+            // 지워진 앱은 선택에서도 뺌
+            val installed = apps.mapTo(HashSet()) { it.packageName }
+            if (selected.retainAll(installed)) onSelectionChanged()
             applyFilter()
         }
     }
@@ -91,10 +113,62 @@ class MainActivity : AppCompatActivity() {
         binding.emptyText.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
     }
 
+    // ---------- 여러 앱 선택 ----------
+
+    private fun toggle(app: AppEntry) {
+        if (busy) return
+        if (!selected.remove(app.packageName)) selected.add(app.packageName)
+        onSelectionChanged()
+    }
+
+    private fun selectAllVisible() {
+        adapter.currentList.forEach { selected.add(it.packageName) }
+        onSelectionChanged()
+    }
+
+    private fun clearSelection() {
+        if (!selecting) return
+        selected.clear()
+        onSelectionChanged()
+    }
+
+    private fun onSelectionChanged() {
+        adapter.selected = selected.toSet()
+        backToList.isEnabled = selecting
+        if (selecting) {
+            binding.toolbar.title = getString(R.string.selection_count, selected.size)
+            binding.toolbar.setNavigationIcon(R.drawable.ic_close)
+            binding.toolbar.navigationContentDescription = getString(R.string.action_clear_selection)
+        } else {
+            binding.toolbar.title = getString(R.string.app_name)
+            binding.toolbar.navigationIcon = null
+        }
+        invalidateOptionsMenu()
+    }
+
+    /** 선택한 앱들 (목록에 보이는 순서, 검색으로 가려진 선택 앱은 뒤에) */
+    private fun selectedApps(): List<AppEntry> {
+        val visible = adapter.currentList.filter { it.packageName in selected }
+        val visibleNames = visible.mapTo(HashSet()) { it.packageName }
+        return visible + allApps.filter { it.packageName in selected && it.packageName !in visibleNames }
+    }
+
+    // ---------- 메뉴 ----------
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        if (selecting) {
+            menuInflater.inflate(R.menu.selection, menu)
+            return true
+        }
         menuInflater.inflate(R.menu.main, menu)
-        val search = menu.findItem(R.id.action_search).actionView as SearchView
+        val searchItem = menu.findItem(R.id.action_search)
+        val search = searchItem.actionView as SearchView
         search.queryHint = getString(R.string.search_hint)
+        if (query.isNotEmpty()) {
+            // 선택 모드에서 돌아와 메뉴를 다시 만들 때 검색어 유지
+            searchItem.expandActionView()
+            search.setQuery(query, false)
+        }
         search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(text: String?): Boolean = true
             override fun onQueryTextChange(text: String?): Boolean {
@@ -104,11 +178,22 @@ class MainActivity : AppCompatActivity() {
             }
         })
         menu.findItem(R.id.action_show_system).isChecked = showSystem
+        menu.findItem(
+            when (sort) {
+                Sort.NAME -> R.id.sort_name
+                Sort.UPDATED -> R.id.sort_updated
+                Sort.SIZE -> R.id.sort_size
+            }
+        ).isChecked = true
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.sel_save -> requestSave(selectedApps())
+            R.id.sel_share -> share(selectedApps())
+            R.id.sel_all -> selectAllVisible()
+            R.id.sel_clear -> clearSelection()
             R.id.action_show_system -> {
                 showSystem = !item.isChecked
                 item.isChecked = showSystem
@@ -127,6 +212,8 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    // ---------- 한 앱 동작 ----------
+
     private fun showActions(app: AppEntry) {
         if (busy) return
         val items = arrayOf(getString(R.string.action_save), getString(R.string.action_share), getString(R.string.action_app_info))
@@ -134,50 +221,84 @@ class MainActivity : AppCompatActivity() {
             .setTitle(app.label)
             .setItems(items) { _, which ->
                 when (which) {
-                    0 -> requestSave(app)
-                    1 -> share(app)
+                    0 -> requestSave(listOf(app))
+                    1 -> share(listOf(app))
                     2 -> openAppInfo(app)
                 }
             }
             .show()
     }
 
-    private fun requestSave(app: AppEntry) {
+    private fun openAppInfo(app: AppEntry) {
+        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + app.packageName)))
+    }
+
+    // ---------- 저장 · 공유 (한 개든 여러 개든 같은 경로) ----------
+
+    private fun requestSave(apps: List<AppEntry>) {
+        if (apps.isEmpty()) return
         if (Build.VERSION.SDK_INT < 29 &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
         ) {
-            pendingSave = app
+            pendingSave = apps
             storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             return
         }
-        save(app)
+        save(apps)
     }
 
-    private fun save(app: AppEntry) = runBusy(app) {
-        val path = withContext(Dispatchers.IO) { Extractor.saveToDownloads(applicationContext, app) }
-        snack(getString(R.string.saved_to, path))
+    /** 하나씩 저장. 하나가 실패해도 나머지는 계속하고 마지막에 결과를 알림 */
+    private fun save(apps: List<AppEntry>) = runBusy(apps) {
+        var saved = 0
+        var lastPath = ""
+        var lastError = ""
+        val failed = ArrayList<String>()
+        apps.forEachIndexed { i, app ->
+            showProgress(i, apps.size)
+            try {
+                lastPath = withContext(Dispatchers.IO) { Extractor.saveToDownloads(applicationContext, app) }
+                saved++
+            } catch (e: Exception) {
+                failed.add(app.label)
+                lastError = e.message ?: e.javaClass.simpleName
+            }
+        }
+        val folder = "${Environment.DIRECTORY_DOWNLOADS}/${Extractor.FOLDER}"
+        snack(
+            when {
+                apps.size == 1 && saved == 1 -> getString(R.string.saved_to, lastPath)
+                failed.isEmpty() -> getString(R.string.batch_saved, saved, folder)
+                apps.size == 1 -> getString(R.string.extract_failed, lastError)
+                else -> getString(R.string.batch_partial, saved, failed.size, failed.joinToString(", "))
+            }
+        )
+        if (failed.isEmpty()) clearSelection()
     }
 
-    private fun share(app: AppEntry) = runBusy(app) {
+    private fun share(apps: List<AppEntry>) = runBusy(apps) {
+        if (apps.isEmpty()) return@runBusy
         val intent = try {
-            withContext(Dispatchers.IO) { Extractor.prepareShare(applicationContext, app) }
+            withContext(Dispatchers.IO) {
+                Extractor.prepareShare(applicationContext, apps) { done -> runOnUiThread { showProgress(done, apps.size) } }
+            }
         } catch (e: Exception) {
             snack(getString(R.string.share_failed, e.message ?: e.javaClass.simpleName))
             return@runBusy
         }
         startActivity(intent)
+        clearSelection()
     }
 
-    private fun openAppInfo(app: AppEntry) {
-        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + app.packageName)))
+    private fun showProgress(done: Int, total: Int) {
+        binding.toolbar.subtitle = if (total > 1) getString(R.string.batch_progress, minOf(done + 1, total), total) else null
     }
 
-    /** 한 번에 하나의 추출만 실행하고, 진행 표시와 오류 안내를 처리 */
-    private fun runBusy(app: AppEntry, block: suspend () -> Unit) {
-        if (busy) return
+    /** 한 번에 하나의 작업만 실행하고, 진행 표시와 예상치 못한 오류 안내를 처리 */
+    private fun runBusy(apps: List<AppEntry>, block: suspend () -> Unit) {
+        if (busy || apps.isEmpty()) return
         busy = true
         binding.progress.visibility = View.VISIBLE
-        snack(getString(R.string.extracting, app.label))
+        if (apps.size == 1) snack(getString(R.string.extracting, apps[0].label))
         lifecycleScope.launch {
             try {
                 block()
@@ -186,6 +307,7 @@ class MainActivity : AppCompatActivity() {
             } finally {
                 busy = false
                 binding.progress.visibility = View.GONE
+                binding.toolbar.subtitle = null
             }
         }
     }

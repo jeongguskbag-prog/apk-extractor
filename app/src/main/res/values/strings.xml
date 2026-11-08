@@ -21,6 +21,13 @@
     <string name="share_failed">Could not prepare share: %1$s</string>
     <string name="share_title">Share %1$s</string>
     <string name="storage_permission_needed">Storage permission is needed to save files on this Android version.</string>
-    <string name="about_text">Extracts installed apps as APK (single) or XAPK (split apps). No ads, no analytics, no internet permission — files never leave your device unless you share them.</string>
+    <string name="about_text">Extracts installed apps as APK (single) or XAPK (split apps). No ads, no analytics, no internet permission — files never leave your device unless you share them.\n\nLong-press an app to select several and save or share them at once.</string>
     <string name="ok">OK</string>
+    <string name="share_title_multi">Share %1$d apps</string>
+    <string name="selection_count">%1$d selected</string>
+    <string name="action_select_all">Select all</string>
+    <string name="action_clear_selection">Clear selection</string>
+    <string name="batch_progress">Extracting %1$d of %2$d…</string>
+    <string name="batch_saved">Saved %1$d files to %2$s</string>
+    <string name="batch_partial">Saved %1$d, failed %2$d (%3$s)</string>
 </resources>

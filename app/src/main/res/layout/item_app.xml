@@ -45,4 +45,15 @@
             android:maxLines="1"
             android:textAppearance="?attr/textAppearanceBodySmall" />
     </LinearLayout>
+
+    <!-- 여러 앱 선택 모드에서만 보임. 누르기는 줄 전체가 처리하므로 체크박스 자체는 클릭을 받지 않음 -->
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/check"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:clickable="false"
+        android:focusable="false"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
 </LinearLayout>

@@ -163,19 +163,53 @@ object Extractor {
         return "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER/${file.name}"
     }
 
-    /** 공유용 파일을 앱 캐시에 만들고 공유 Intent 를 돌려줌. 백그라운드 스레드에서 호출 */
-    fun prepareShare(context: Context, app: AppEntry): Intent {
+    /**
+     * 공유용 파일을 앱 캐시에 만들고 공유 Intent 를 돌려줌. 백그라운드 스레드에서 호출.
+     * 여러 앱이면 ACTION_SEND_MULTIPLE 로 한 번에 보냄. onProgress(완료 개수) 로 진행 상황을 알림
+     */
+    fun prepareShare(context: Context, apps: List<AppEntry>, onProgress: (Int) -> Unit = {}): Intent {
+        require(apps.isNotEmpty())
         val dir = File(context.cacheDir, "share")
         dir.deleteRecursively()
         if (!dir.mkdirs()) throw IllegalStateException("Cannot create share cache")
-        val file = File(dir, fileName(app))
-        FileOutputStream(file).use { writeTo(context, app, it) }
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-        val send = Intent(Intent.ACTION_SEND).apply {
-            type = mime(app)
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val used = HashSet<String>()
+        val uris = ArrayList<Uri>()
+        apps.forEachIndexed { i, app ->
+            val file = File(dir, uniqueName(fileName(app), used))
+            FileOutputStream(file).use { writeTo(context, app, it) }
+            uris.add(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file))
+            onProgress(i + 1)
         }
-        return Intent.createChooser(send, context.getString(R.string.share_title, app.label))
+        val send = if (uris.size == 1) {
+            Intent(Intent.ACTION_SEND).apply {
+                type = mime(apps[0])
+                putExtra(Intent.EXTRA_STREAM, uris[0])
+            }
+        } else {
+            Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                type = if (apps.all { !it.isSplit }) MIME_APK else "*/*"
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+            }
+        }
+        send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val title = if (apps.size == 1) {
+            context.getString(R.string.share_title, apps[0].label)
+        } else {
+            context.getString(R.string.share_title_multi, apps.size)
+        }
+        return Intent.createChooser(send, title)
+    }
+
+    /** 같은 이름이 이미 있으면 "이름 (2).apk" 처럼 바꿈 */
+    private fun uniqueName(name: String, used: MutableSet<String>): String {
+        var candidate = name
+        var n = 2
+        val base = name.substringBeforeLast('.')
+        val ext = name.substringAfterLast('.', "")
+        while (!used.add(candidate.lowercase())) {
+            candidate = if (ext.isEmpty()) "$base ($n)" else "$base ($n).$ext"
+            n++
+        }
+        return candidate
     }
 }
