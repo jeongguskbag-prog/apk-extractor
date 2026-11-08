@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ApkVault: 금고 + 다이얼 안의 아래 화살표. 한 경로에 evenOdd 로 구멍을 뚫어 테마(단색) 아이콘에서도 모양이 유지됨.
+     108dp 캔버스, 그림은 가운데 지름 66dp 안전 영역 안에 있음 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M39,30 H69 A7,7 0 0 1 76,37 V67 A7,7 0 0 1 69,74 H39 A7,7 0 0 1 32,67 V37 A7,7 0 0 1 39,30 Z M41,52 A13,13 0 1 0 67,52 A13,13 0 1 0 41,52 Z M44,52 A10,10 0 1 0 64,52 A10,10 0 1 0 44,52 Z M52,45 H56 V51 H61 L54,59 L47,51 H52 Z M34.5,38 H37 V44 H34.5 Z M34.5,60 H37 V66 H34.5 Z M40,74 H46 V78 H40 Z M62,74 H68 V78 H62 Z" />
+</vector>
