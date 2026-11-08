@@ -1,4 +1,4 @@
-package com.apkextractor.app
+package com.jeongguskbag.apkvault
 
 import android.Manifest
 import android.content.Intent
@@ -18,7 +18,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.apkextractor.app.databinding.ActivityMainBinding
+import com.jeongguskbag.apkvault.databinding.ActivityMainBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
