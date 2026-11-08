@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">APK 추출기</string>
+    <string name="search_hint">앱 검색</string>
+    <string name="menu_search">검색</string>
+    <string name="menu_show_system">시스템 앱 표시</string>
+    <string name="menu_sort_name">이름순</string>
+    <string name="menu_sort_updated">최근 업데이트순</string>
+    <string name="menu_sort_size">크기순</string>
+    <string name="menu_about">앱 정보</string>
+    <string name="loading">앱 목록을 불러오는 중…</string>
+    <string name="empty">앱이 없습니다</string>
+    <string name="item_meta">%1$s · %2$s</string>
+    <string name="item_split">%1$s · %2$s · 분할 %3$d개</string>
+    <string name="action_save">다운로드 폴더에 저장</string>
+    <string name="action_share">공유</string>
+    <string name="action_app_info">앱 정보 (설정)</string>
+    <string name="extracting">%1$s 추출 중…</string>
+    <string name="saved_to">저장했습니다: %1$s</string>
+    <string name="extract_failed">추출 실패: %1$s</string>
+    <string name="share_failed">공유 준비 실패: %1$s</string>
+    <string name="share_title">%1$s 공유</string>
+    <string name="storage_permission_needed">이 안드로이드 버전에서는 파일 저장에 저장소 권한이 필요합니다.</string>
+    <string name="about_text">설치된 앱을 APK(단일) 또는 XAPK(분할 앱)로 추출합니다. 광고·통계·인터넷 권한이 없어 공유하지 않는 한 파일이 기기 밖으로 나가지 않습니다.</string>
+    <string name="ok">확인</string>
+</resources>
