@@ -24,7 +24,16 @@ Actions 실행 화면의 Artifacts 에 `ApkExtractor-debug` 로 올립니다. �
 
 로컬: Android Studio 로 열거나 `./gradlew assembleDebug`
 
+## 출시용(서명) 빌드
+- 패키지 이름: `com.jeongguskbag.apkvault` (Play 출시 후 변경 불가)
+- 서명 정보는 저장소에 넣지 않고 GitHub Secrets 로만 받음:
+  `APKVAULT_KEYSTORE_BASE64`, `APKVAULT_KEYSTORE_PASSWORD`, `APKVAULT_KEY_ALIAS`, `APKVAULT_KEY_PASSWORD`
+- 만들기: Actions → **Release build** → Run workflow (또는 `v1.0.0` 같은 태그 푸시)
+  → Artifacts 의 `ApkVault-release` 에 `app-release.aab`(Play 업로드용), `app-release.apk`, `mapping.txt`
+- Play Console 에서 **Play 앱 서명**을 사용 — 이 키는 업로드 키라 잃어버려도 Play 고객센터에서 재설정 가능
+- 로컬: 위 4개 값을 환경 변수 `APKVAULT_KEYSTORE_FILE`(키 파일 경로), `APKVAULT_KEYSTORE_PASSWORD`,
+  `APKVAULT_KEY_ALIAS`, `APKVAULT_KEY_PASSWORD` 로 주고 `./gradlew bundleRelease`
+
 ## 출시 전 할 일
-- 정식 서명 키로 릴리스 빌드(AAB) 만들기 (키는 저장소에 넣지 말 것)
-- Play Console 에서 `QUERY_ALL_PACKAGES` 사용 신고
-- 유료 판매 방식 결정 (유료 앱 또는 인앱 결제)
+- Play Console 에 `QUERY_ALL_PACKAGES` 사용 신고, 데이터 보안 양식(수집 없음)
+- 유료 앱으로 생성(무료로 올린 뒤에는 유료로 바꿀 수 없음)

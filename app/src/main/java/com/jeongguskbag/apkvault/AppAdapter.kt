@@ -1,4 +1,4 @@
-package com.apkextractor.app
+package com.jeongguskbag.apkvault
 
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
@@ -10,7 +10,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.apkextractor.app.databinding.ItemAppBinding
+import com.jeongguskbag.apkvault.databinding.ItemAppBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

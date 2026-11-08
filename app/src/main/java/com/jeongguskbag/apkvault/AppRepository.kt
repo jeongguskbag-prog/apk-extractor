@@ -1,4 +1,4 @@
-package com.apkextractor.app
+package com.jeongguskbag.apkvault
 
 import android.content.Context
 import android.content.pm.ApplicationInfo

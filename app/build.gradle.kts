@@ -4,19 +4,35 @@ plugins {
 }
 
 android {
-    namespace = "com.apkextractor.app"
+    namespace = "com.jeongguskbag.apkvault"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.apkextractor.app"
+        applicationId = "com.jeongguskbag.apkvault"
         minSdk = 24
         targetSdk = 35
         versionCode = 2
         versionName = "0.2.0"
     }
 
+    // 출시용 서명: 키 파일과 비밀번호는 저장소에 넣지 않고 환경 변수로만 받음
+    // (GitHub Actions 에서는 Secrets → .github/workflows/release.yml 이 넘겨줌).
+    // 값이 없으면 release 빌드는 서명 없이 만들어짐 (빌드 확인용).
+    val releaseKeystore = System.getenv("APKVAULT_KEYSTORE_FILE")
+    signingConfigs {
+        if (!releaseKeystore.isNullOrBlank()) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("APKVAULT_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("APKVAULT_KEY_ALIAS")
+                keyPassword = System.getenv("APKVAULT_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (!releaseKeystore.isNullOrBlank()) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

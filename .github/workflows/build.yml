@@ -21,11 +21,11 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # 디버그 APK 빌드 + 안드로이드 lint (오류가 있으면 실패)
-      - name: Build debug APK and run lint
+      # 디버그 APK 빌드 + 안드로이드 lint + 출시용(R8 축소) 빌드 확인. 출시용은 여기서는 서명하지 않음
+      - name: Build debug APK, run lint, check release build
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug lintDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug lintDebug assembleRelease --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
