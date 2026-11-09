@@ -12,6 +12,7 @@
 ## 아이콘
 - 앱: 적응형 아이콘(`drawable-anydpi-v26/ic_launcher.xml`) — 배경 `#1A56DB`, 금고 + 다이얼 속 아래 화살표, 안드로이드 13 테마(단색) 아이콘 포함
 - Play 스토어용 512×512: `store/icon-512.png` · 모양별 미리보기: `store/icon-preview.png`
+- Play 그래픽 이미지 1024×500 (24비트 PNG): `store/feature-graphic-ko.png`, `store/feature-graphic-en.png`
 
 ## 권한
 | 권한 | 이유 |
