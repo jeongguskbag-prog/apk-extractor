@@ -11,8 +11,8 @@ android {
         applicationId = "com.jeongguskbag.apkvault"
         minSdk = 24
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.5.0"
+        versionCode = 6
+        versionName = "0.6.0"
     }
 
     // 출시용 서명: 키 파일과 비밀번호는 저장소에 넣지 않고 환경 변수로만 받음
