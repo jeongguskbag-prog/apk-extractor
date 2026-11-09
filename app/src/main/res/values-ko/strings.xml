@@ -30,4 +30,9 @@
     <string name="batch_progress">추출 중 (%1$d/%2$d)…</string>
     <string name="batch_saved">%1$d개 파일을 저장했습니다: %2$s</string>
     <string name="batch_partial">%1$d개 저장, %2$d개 실패 (%3$s)</string>
+    <string name="menu_split_large">큰 파일 30MB씩 나눠 저장</string>
+    <string name="split_on">30MB 가 넘는 파일은 30MB 씩 나눠(.001, .002 …) 저장·공유합니다. 받은 쪽에서 7-Zip·반디집으로 합치면 원래 파일이 됩니다.</string>
+    <string name="split_off">파일을 나누지 않고 통째로 저장·공유합니다.</string>
+    <string name="saved_split">%1$s 외: 30MB 씩 %2$d개로 나눠 %3$s 에 저장했습니다</string>
+    <string name="batch_split_note">%1$d개는 30MB 씩 나눠 저장</string>
 </resources>

@@ -35,6 +35,12 @@ class MainActivity : AppCompatActivity() {
     private var allApps: List<AppEntry> = emptyList()
     private var query = ""
     private var showSystem = false
+
+    // "큰 파일 30MB씩 나눠 저장" 옵션 (앱을 다시 켜도 유지)
+    private val prefs by lazy { getSharedPreferences("settings", MODE_PRIVATE) }
+    private var splitLarge: Boolean
+        get() = prefs.getBoolean("split_large", false)
+        set(value) { prefs.edit().putBoolean("split_large", value).apply() }
     private var sort = Sort.NAME
     private var busy = false
     private var pendingSave: List<AppEntry> = emptyList()
@@ -178,6 +184,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
         menu.findItem(R.id.action_show_system).isChecked = showSystem
+        menu.findItem(R.id.action_split_large).isChecked = splitLarge
         menu.findItem(
             when (sort) {
                 Sort.NAME -> R.id.sort_name
@@ -194,6 +201,11 @@ class MainActivity : AppCompatActivity() {
             R.id.sel_share -> share(selectedApps())
             R.id.sel_all -> selectAllVisible()
             R.id.sel_clear -> clearSelection()
+            R.id.action_split_large -> {
+                splitLarge = !item.isChecked
+                item.isChecked = splitLarge
+                snack(getString(if (splitLarge) R.string.split_on else R.string.split_off))
+            }
             R.id.action_show_system -> {
                 showSystem = !item.isChecked
                 item.isChecked = showSystem
@@ -250,13 +262,17 @@ class MainActivity : AppCompatActivity() {
     /** 하나씩 저장. 하나가 실패해도 나머지는 계속하고 마지막에 결과를 알림 */
     private fun save(apps: List<AppEntry>) = runBusy(apps) {
         var saved = 0
-        var lastPath = ""
+        var last: Extractor.Saved? = null
+        var splitCount = 0
         var lastError = ""
         val failed = ArrayList<String>()
+        val split = splitLarge
         apps.forEachIndexed { i, app ->
             showProgress(i, apps.size)
             try {
-                lastPath = withContext(Dispatchers.IO) { Extractor.saveToDownloads(applicationContext, app) }
+                val result = withContext(Dispatchers.IO) { Extractor.saveToDownloads(applicationContext, app, split) }
+                last = result
+                if (result.parts > 1) splitCount++
                 saved++
             } catch (e: Exception) {
                 failed.add(app.label)
@@ -266,7 +282,11 @@ class MainActivity : AppCompatActivity() {
         val folder = "${Environment.DIRECTORY_DOWNLOADS}/${Extractor.FOLDER}"
         snack(
             when {
-                apps.size == 1 && saved == 1 -> getString(R.string.saved_to, lastPath)
+                apps.size == 1 && saved == 1 && last!!.parts > 1 ->
+                    getString(R.string.saved_split, last!!.names.first(), last!!.parts, folder)
+                apps.size == 1 && saved == 1 -> getString(R.string.saved_to, last!!.firstPath)
+                failed.isEmpty() && splitCount > 0 ->
+                    getString(R.string.batch_saved, saved, folder) + " · " + getString(R.string.batch_split_note, splitCount)
                 failed.isEmpty() -> getString(R.string.batch_saved, saved, folder)
                 apps.size == 1 -> getString(R.string.extract_failed, lastError)
                 else -> getString(R.string.batch_partial, saved, failed.size, failed.joinToString(", "))
@@ -279,7 +299,7 @@ class MainActivity : AppCompatActivity() {
         if (apps.isEmpty()) return@runBusy
         val intent = try {
             withContext(Dispatchers.IO) {
-                Extractor.prepareShare(applicationContext, apps) { done -> runOnUiThread { showProgress(done, apps.size) } }
+                Extractor.prepareShare(applicationContext, apps, splitLarge) { done -> runOnUiThread { showProgress(done, apps.size) } }
             }
         } catch (e: Exception) {
             snack(getString(R.string.share_failed, e.message ?: e.javaClass.simpleName))

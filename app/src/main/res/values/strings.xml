@@ -30,4 +30,9 @@
     <string name="batch_progress">Extracting %1$d of %2$d…</string>
     <string name="batch_saved">Saved %1$d files to %2$s</string>
     <string name="batch_partial">Saved %1$d, failed %2$d (%3$s)</string>
+    <string name="menu_split_large">Split files over 30 MB</string>
+    <string name="split_on">Files over 30 MB will be saved and shared in 30 MB parts (.001, .002 …). Join them with 7-Zip or a similar tool.</string>
+    <string name="split_off">Files are saved and shared whole.</string>
+    <string name="saved_split">Saved %1$s and more: %2$d parts of 30 MB in %3$s</string>
+    <string name="batch_split_note">%1$d split into 30 MB parts</string>
 </resources>
