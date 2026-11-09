@@ -43,13 +43,11 @@
     <string name="join_err_not_part">%1$s is not a part file (.001, .002 …).</string>
     <string name="join_err_mixed">Parts of different files are mixed: %1$s</string>
     <string name="join_err_duplicate">The same part was selected twice: %1$s</string>
-    <string name="join_title">Choose parts to join (.001)</string>
-    <string name="join_none">No first parts (.001) found.\n\nParts saved by ApkVault appear here automatically. For parts received in other apps, tap \"Add folder\" to allow that folder once.</string>
-    <string name="join_add_folder">Add folder</string>
-    <string name="join_item">%1$s\n%2$d parts · %3$s</string>
-    <string name="join_item_incomplete">%1$s\n⚠ Parts missing · %2$s</string>
-    <string name="join_where_own">Saved by ApkVault</string>
-    <string name="join_folder_added">Folder added. Parts in it now appear in the list.</string>
+    <string name="join_pick_folder">Choose the folder with the parts, then tap \"Use this folder\".</string>
+    <string name="join_title">Choose a file to join (.001)\n%1$s</string>
+    <string name="join_none_in_folder">No first parts (.001) to join in %1$s.</string>
+    <string name="join_item">%1$s\n%2$d parts · tap to join</string>
+    <string name="join_item_incomplete">%1$s\n⚠ Parts missing, can\'t join</string>
     <string name="join_err_missing">Missing parts: %1$s. Put them in the same folder.</string>
     <string name="join_err_incomplete">The joined file is incomplete. Check that every part is there and none were renamed or swapped. Nothing was saved.</string>
 </resources>
