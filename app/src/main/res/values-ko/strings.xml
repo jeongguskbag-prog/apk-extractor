@@ -35,4 +35,21 @@
     <string name="split_off">파일을 나누지 않고 통째로 저장·공유합니다.</string>
     <string name="saved_split">%1$s 외: 30MB 씩 %2$d개로 나눠 %3$s 에 저장했습니다</string>
     <string name="batch_split_note">%1$d개는 30MB 씩 나눠 저장</string>
+    <string name="menu_join">조각 합치기</string>
+    <string name="joining">조각을 합치는 중…</string>
+    <string name="join_done">%2$d개 조각을 합쳐 %3$s 에 저장했습니다: %1$s</string>
+    <string name="join_done_unverified">%2$d개 조각을 합쳐 %3$s 에 저장했습니다: %1$s (4GB 가 넘어 완전한지 검사하지 못했어요)</string>
+    <string name="join_done_corrupt">%1$s 로 합쳤지만 내용 검사에서 오류가 났어요. 설치가 안 되면 조각을 다시 받아 주세요.</string>
+    <string name="join_err_not_part">%1$s 은(는) 조각 파일(.001, .002 …)이 아니에요.</string>
+    <string name="join_err_mixed">서로 다른 파일의 조각이 섞여 있어요: %1$s</string>
+    <string name="join_err_duplicate">같은 번호의 조각이 두 번 선택됐어요: %1$s</string>
+    <string name="join_title">합칠 조각 고르기 (.001)</string>
+    <string name="join_none">합칠 조각(.001)을 찾지 못했어요.\n\nApkVault 로 나눠 저장한 조각은 여기 자동으로 보여요. 카톡 등 다른 앱으로 받은 조각은 \"폴더 추가\"로 그 폴더를 한 번 허용해 주세요.</string>
+    <string name="join_add_folder">폴더 추가</string>
+    <string name="join_item">%1$s\n조각 %2$d개 · %3$s</string>
+    <string name="join_item_incomplete">%1$s\n⚠ 빠진 조각 있음 · %2$s</string>
+    <string name="join_where_own">ApkVault 저장</string>
+    <string name="join_folder_added">폴더를 추가했어요. 이 폴더의 조각도 목록에 보여요.</string>
+    <string name="join_err_missing">빠진 조각이 있어요: %1$s. 빠진 조각을 같은 폴더에 넣어 주세요.</string>
+    <string name="join_err_incomplete">합친 파일이 완전하지 않아 저장하지 않았어요. 조각이 모두 있는지, 이름·순서가 바뀌지 않았는지 확인해 주세요.</string>
 </resources>

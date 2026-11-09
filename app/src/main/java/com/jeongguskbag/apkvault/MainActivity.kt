@@ -57,9 +57,25 @@ class MainActivity : AppCompatActivity() {
     // 안드로이드 9 이하에서만 쓰는 저장소 권한 요청
     private val storagePermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         val apps = pendingSave
+        val parts = pendingJoin
         pendingSave = emptyList()
-        if (apps.isEmpty()) return@registerForActivityResult
-        if (granted) save(apps) else snack(getString(R.string.storage_permission_needed))
+        pendingJoin = emptyList()
+        if (apps.isEmpty() && parts.isEmpty()) return@registerForActivityResult
+        if (!granted) { snack(getString(R.string.storage_permission_needed)); return@registerForActivityResult }
+        if (apps.isNotEmpty()) save(apps)
+        if (parts.isNotEmpty()) join(parts)
+    }
+
+    // 조각 합치기: 합칠 조각(.001) 목록은 앱이 직접 찾아 보여 줌
+    private var pendingJoin: List<Uri> = emptyList()
+
+    // 다른 앱으로 받은 조각이 있는 폴더를 한 번 허용받음 (앱이 기억)
+    private val addFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
+        if (tree != null) {
+            runCatching { contentResolver.takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            snack(getString(R.string.join_folder_added))
+        }
+        showParts()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -201,6 +217,9 @@ class MainActivity : AppCompatActivity() {
             R.id.sel_share -> share(selectedApps())
             R.id.sel_all -> selectAllVisible()
             R.id.sel_clear -> clearSelection()
+            R.id.action_join -> {
+                showParts()
+            }
             R.id.action_split_large -> {
                 splitLarge = !item.isChecked
                 item.isChecked = splitLarge
@@ -309,16 +328,95 @@ class MainActivity : AppCompatActivity() {
         clearSelection()
     }
 
+    // ---------- 조각 합치기 ----------
+
+    private fun needsStoragePermission() = Build.VERSION.SDK_INT < 29 &&
+        ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+
+    private fun requestJoin(uris: List<Uri>) {
+        if (needsStoragePermission()) {
+            pendingJoin = uris
+            storagePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            return
+        }
+        join(uris)
+    }
+
+    /** 찾은 조각 묶음 중 첫 조각(.001)만 목록으로 보여 줌. 고르면 나머지까지 합침 */
+    private fun showParts() {
+        if (busy) return
+        binding.progress.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            val found = try {
+                withContext(Dispatchers.IO) { PartFinder.scan(applicationContext) }
+            } finally {
+                if (!busy) binding.progress.visibility = View.GONE
+            }
+            if (isFinishing || isDestroyed) return@launch
+            val dialog = MaterialAlertDialogBuilder(this@MainActivity)
+                .setTitle(R.string.join_title)
+                .setNeutralButton(R.string.join_add_folder) { _, _ -> addFolder.launch(null) }
+                .setNegativeButton(android.R.string.cancel, null)
+            if (found.isEmpty()) {
+                dialog.setMessage(R.string.join_none)
+            } else {
+                val labels = found.map { f ->
+                    val where = f.folder ?: getString(R.string.join_where_own)
+                    val g = f.group
+                    if (g.complete) getString(R.string.join_item, g.firstName, g.parts.size, where)
+                    else getString(R.string.join_item_incomplete, g.firstName, where)
+                }.toTypedArray()
+                dialog.setItems(labels) { _, i ->
+                    val g = found[i].group
+                    if (g.complete) requestJoin(g.parts)
+                    else snack(getString(R.string.join_err_missing, g.missing.joinToString(", ") { String.format(java.util.Locale.ROOT, "%03d", it) }))
+                }
+            }
+            dialog.show()
+        }
+    }
+
+    private fun join(uris: List<Uri>) = runTask(getString(R.string.joining)) {
+        val result = try {
+            withContext(Dispatchers.IO) { Extractor.join(applicationContext, uris) }
+        } catch (p: PartFiles.Problem) {
+            snack(problemText(p))
+            return@runTask
+        }
+        val folder = "${Environment.DIRECTORY_DOWNLOADS}/${Extractor.FOLDER}"
+        snack(
+            when (result.check) {
+                PartFiles.ZipCheck.CORRUPT -> getString(R.string.join_done_corrupt, result.name)
+                PartFiles.ZipCheck.UNKNOWN -> getString(R.string.join_done_unverified, result.name, result.parts, folder)
+                else -> getString(R.string.join_done, result.name, result.parts, folder)
+            }
+        )
+    }
+
+    private fun problemText(p: PartFiles.Problem): String = when (p.code) {
+        PartFiles.Code.NOT_PART -> getString(R.string.join_err_not_part, p.detail)
+        PartFiles.Code.MIXED -> getString(R.string.join_err_mixed, p.detail)
+        PartFiles.Code.DUPLICATE -> getString(R.string.join_err_duplicate, p.detail)
+        PartFiles.Code.MISSING -> getString(R.string.join_err_missing, p.detail)
+        PartFiles.Code.INCOMPLETE -> getString(R.string.join_err_incomplete)
+    }
+
     private fun showProgress(done: Int, total: Int) {
         binding.toolbar.subtitle = if (total > 1) getString(R.string.batch_progress, minOf(done + 1, total), total) else null
     }
 
     /** 한 번에 하나의 작업만 실행하고, 진행 표시와 예상치 못한 오류 안내를 처리 */
     private fun runBusy(apps: List<AppEntry>, block: suspend () -> Unit) {
-        if (busy || apps.isEmpty()) return
+        if (apps.isEmpty()) return
+        runTask(if (apps.size == 1) getString(R.string.extracting, apps[0].label) else null, block)
+    }
+
+    /** 한 번에 하나의 작업만 실행하고, 진행 표시와 예상치 못한 오류 안내를 처리 */
+    private fun runTask(startMessage: String?, block: suspend () -> Unit) {
+        if (busy) return
         busy = true
         binding.progress.visibility = View.VISIBLE
-        if (apps.size == 1) snack(getString(R.string.extracting, apps[0].label))
+        if (startMessage != null) snack(startMessage)
         lifecycleScope.launch {
             try {
                 block()
