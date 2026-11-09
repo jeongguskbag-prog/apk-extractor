@@ -21,7 +21,7 @@
     <string name="share_failed">Could not prepare share: %1$s</string>
     <string name="share_title">Share %1$s</string>
     <string name="storage_permission_needed">Storage permission is needed to save files on this Android version.</string>
-    <string name="about_text">Extracts installed apps as APK (single) or XAPK (split apps). No ads, no analytics, no internet permission — files never leave your device unless you share them.\n\nLong-press an app to select several and save or share them at once.\n\nTurn on \"Split files over 30 MB\" in the menu to save large files as .001, .002 … parts, and use \"Join split parts\" to pick the first part (.001) and restore the original file.</string>
+    <string name="about_text">Extracts installed apps as APK (single) or XAPK (split apps). No ads, no analytics, no internet permission — files never leave your device unless you share them.\n\nLong-press an app to select several and save or share them at once.\n\nTurn on \"Split files over 30 MB\" in the menu to save large files as .001, .002 … parts. AI chat apps such as Claude accept files of up to 30 MB, so you can upload large apps in parts. Use \"Join split parts\" to pick the first part (.001) and restore the original file.</string>
     <string name="ok">OK</string>
     <string name="share_title_multi">Share %1$d apps</string>
     <string name="selection_count">%1$d selected</string>
@@ -31,7 +31,7 @@
     <string name="batch_saved">Saved %1$d files to %2$s</string>
     <string name="batch_partial">Saved %1$d, failed %2$d (%3$s)</string>
     <string name="menu_split_large">Split files over 30 MB</string>
-    <string name="split_on">Files over 30 MB will be saved and shared in 30 MB parts (.001, .002 …). Join them with 7-Zip or a similar tool.</string>
+    <string name="split_on">Files over 30 MB will be saved and shared in 30 MB parts (.001, .002 …), to fit upload limits such as the 30 MB per file in AI chat apps like Claude. Join them with 7-Zip or a similar tool.</string>
     <string name="split_off">Files are saved and shared whole.</string>
     <string name="saved_split">Saved %1$s and more: %2$d parts of 30 MB in %3$s</string>
     <string name="batch_split_note">%1$d split into 30 MB parts</string>
