@@ -285,6 +285,48 @@ object Extractor {
         return Intent.createChooser(send, title)
     }
 
+    /** 조각 합치기 결과 */
+    class Joined(val name: String, val path: String, val parts: Int, val check: PartFiles.ZipCheck?)
+
+    private fun displayName(context: Context, uri: Uri): String? = try {
+        context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+            if (c.moveToFirst()) c.getString(0) else null
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    /**
+     * 고른 조각들(이름.확장자.001, .002 …)을 번호순으로 이어 붙여 다운로드/ApkExtractor 에 원래 이름으로 저장.
+     * APK·XAPK 면 합친 뒤 완전한지 검사해서, 조각이 빠졌거나 순서가 틀리면 저장하지 않음.
+     * 백그라운드 스레드에서 호출. 문제가 있으면 PartFiles.Problem 을 던짐
+     */
+    fun join(context: Context, uris: List<Uri>): Joined {
+        val named = uris.map { it to (displayName(context, it) ?: it.lastPathSegment.orEmpty()) }
+        val plan = PartFiles.plan(named)
+        val dir = File(context.cacheDir, "join")
+        dir.deleteRecursively()
+        if (!dir.mkdirs()) throw IllegalStateException("Cannot create join cache")
+        try {
+            val temp = File(dir, "joined.tmp")
+            FileOutputStream(temp).use { out ->
+                for (uri in plan.ordered) {
+                    context.contentResolver.openInputStream(uri)?.use { it.copyTo(out, 64 * 1024) }
+                        ?: throw IllegalStateException("Cannot read ${displayName(context, uri)}")
+                }
+            }
+            val check = if (PartFiles.isZipName(plan.base)) PartFiles.checkZip(temp) else null
+            if (check == PartFiles.ZipCheck.NOT_ZIP || check == PartFiles.ZipCheck.INCOMPLETE) {
+                throw PartFiles.Problem(PartFiles.Code.INCOMPLETE, plan.base)
+            }
+            val mimeType = if (plan.base.endsWith(".apk", ignoreCase = true)) MIME_APK else MIME_PART
+            val path = saveOne(context, plan.base, mimeType) { out -> copyRange(temp, 0, temp.length(), out) }
+            return Joined(path.substringAfterLast('/'), path, plan.ordered.size, check)
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
     /** 같은 이름이 이미 있으면 "이름 (2).apk" 처럼 바꿈 */
     private fun uniqueName(name: String, used: MutableSet<String>): String {
         var candidate = name

@@ -35,4 +35,15 @@
     <string name="split_off">Files are saved and shared whole.</string>
     <string name="saved_split">Saved %1$s and more: %2$d parts of 30 MB in %3$s</string>
     <string name="batch_split_note">%1$d split into 30 MB parts</string>
+    <string name="menu_join">Join split parts</string>
+    <string name="join_hint">Select all the parts (.001, .002 …). Long-press to select several.</string>
+    <string name="joining">Joining parts…</string>
+    <string name="join_done">Joined %1$s from %2$d parts in %3$s</string>
+    <string name="join_done_unverified">Joined %1$s from %2$d parts in %3$s (over 4 GB, so it could not be checked)</string>
+    <string name="join_done_corrupt">Joined %1$s, but its contents failed the check. If it does not install, get the parts again.</string>
+    <string name="join_err_not_part">%1$s is not a part file (.001, .002 …).</string>
+    <string name="join_err_mixed">Parts of different files are mixed: %1$s</string>
+    <string name="join_err_duplicate">The same part was selected twice: %1$s</string>
+    <string name="join_err_missing">Missing parts: %1$s. Select all of them.</string>
+    <string name="join_err_incomplete">The joined file is incomplete. Check that every part is there and none were renamed or swapped. Nothing was saved.</string>
 </resources>

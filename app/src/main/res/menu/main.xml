@@ -13,6 +13,10 @@
         android:title="@string/menu_show_system"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_join"
+        android:title="@string/menu_join"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_split_large"
         android:checkable="true"
         android:title="@string/menu_split_large"
