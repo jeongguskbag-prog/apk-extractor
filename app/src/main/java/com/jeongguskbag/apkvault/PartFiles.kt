@@ -47,6 +47,20 @@ object PartFiles {
     }
 
     /**
+     * 폴더 안 파일들(항목, 이름) 중 base 의 조각만 골라 번호순으로. 조각 하나만 골랐을 때 나머지를 찾는 데 씀.
+     * 001 부터 빠짐없이 이어지지 않으면 null (빠진 조각이 있음)
+     */
+    fun <T> siblings(base: String, candidates: List<Pair<T, String>>): List<Pair<T, String>>? {
+        val mine = candidates.mapNotNull { (item, name) ->
+            val p = parse(name) ?: return@mapNotNull null
+            if (p.first == base) Triple(item, name, p.second) else null
+        }.distinctBy { it.third }.sortedBy { it.third }
+        if (mine.isEmpty()) return null
+        if (mine.map { it.third } != (1..mine.size).toList()) return null
+        return mine.map { it.first to it.second }
+    }
+
+    /**
      * OK: 완전함 / NOT_ZIP: ZIP 이 아님(첫 조각이 아닌 걸로 시작 등) / INCOMPLETE: 구조가 어긋남(조각 빠짐·더해짐·순서) /
      * CORRUPT: 구조는 맞지만 내용 CRC 오류(다른 파일 조각이 섞임 등) / UNKNOWN: 4GB 넘는 ZIP64 라 검사 못 함
      */

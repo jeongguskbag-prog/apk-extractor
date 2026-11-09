@@ -106,6 +106,22 @@ class PartFilesTest {
         assertEquals(PartFiles.ZipCheck.NOT_ZIP, PartFiles.checkZip(fileOf(parts.drop(1))))
     }
 
+    @Test fun findsSiblingsInAFolder() {
+        val folder = listOf(
+            "u3" to "app.xapk.003", "u1" to "app.xapk.001", "x" to "other.xapk.001",
+            "p" to "photo.jpg", "u2" to "app.xapk.002", "y" to "app.xapk",
+        )
+        val found = PartFiles.siblings("app.xapk", folder)!!
+        assertEquals(listOf("u1", "u2", "u3"), found.map { it.first })
+        // 가운데가 없으면 null
+        assertNull(PartFiles.siblings("app.xapk", folder.filter { it.first != "u2" }))
+        // 하나도 없으면 null
+        assertNull(PartFiles.siblings("none.apk", folder))
+        // 밑줄·점이 든 이름도 정확히 같은 이름만 (비슷한 이름 섞이지 않음)
+        val tricky = listOf("a" to "카톡_10.8.xapk.001", "b" to "카톡_10.8.xapk.002", "c" to "카톡X10.8.xapk.002")
+        assertEquals(listOf("a", "b"), PartFiles.siblings("카톡_10.8.xapk", tricky)!!.map { it.first })
+    }
+
     @Test fun zipNames() {
         assert(PartFiles.isZipName("a.xapk"))
         assert(PartFiles.isZipName("A.APK"))

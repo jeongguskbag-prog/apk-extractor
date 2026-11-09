@@ -36,7 +36,7 @@
     <string name="saved_split">%1$s 외: 30MB 씩 %2$d개로 나눠 %3$s 에 저장했습니다</string>
     <string name="batch_split_note">%1$d개는 30MB 씩 나눠 저장</string>
     <string name="menu_join">조각 합치기</string>
-    <string name="join_hint">조각 파일(.001, .002 …)을 모두 선택하세요. 길게 누르면 여러 개를 고를 수 있어요.</string>
+    <string name="join_hint">조각 하나만 고르면 나머지는 찾아서 합쳐요. 여러 개를 직접 골라도 돼요.</string>
     <string name="joining">조각을 합치는 중…</string>
     <string name="join_done">%2$d개 조각을 합쳐 %3$s 에 저장했습니다: %1$s</string>
     <string name="join_done_unverified">%2$d개 조각을 합쳐 %3$s 에 저장했습니다: %1$s (4GB 가 넘어 완전한지 검사하지 못했어요)</string>
@@ -46,4 +46,7 @@
     <string name="join_err_duplicate">같은 번호의 조각이 두 번 선택됐어요: %1$s</string>
     <string name="join_err_missing">빠진 조각이 있어요: %1$s. 조각을 모두 선택해 주세요.</string>
     <string name="join_err_incomplete">합친 파일이 완전하지 않아 저장하지 않았어요. 조각이 모두 있는지, 이름·순서가 바뀌지 않았는지 확인해 주세요.</string>
+    <string name="join_need_folder">나머지 조각을 찾으려면 조각이 있는 폴더 접근을 한 번 허용해 주세요. 다음부터는 묻지 않아요.</string>
+    <string name="join_folder_cancelled">폴더 접근을 허용하지 않았어요. 조각을 모두 선택하는 방법으로 합쳐 주세요.</string>
+    <string name="join_err_not_in_folder">그 폴더에서 %1$s 의 조각을 모두 찾지 못했어요. 조각이 모두 들어 있는 폴더를 골라 주세요.</string>
 </resources>

@@ -69,7 +69,25 @@ class MainActivity : AppCompatActivity() {
     // 조각 합치기: 조각 파일(.001, .002 …)을 여러 개 고름
     private var pendingJoin: List<Uri> = emptyList()
     private val pickParts = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        if (uris.isNotEmpty()) requestJoin(uris)
+        when {
+            uris.size == 1 -> findAndJoin(uris[0]) // 하나만 골랐으면 나머지 조각을 찾아서
+            uris.isNotEmpty() -> requestJoin(uris)
+        }
+    }
+
+    // 나머지 조각을 찾으려고 폴더 접근을 허용받을 때
+    private var pendingBase: String? = null
+    private val pickFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
+        val base = pendingBase
+        pendingBase = null
+        if (base == null) return@registerForActivityResult
+        if (tree == null) { snack(getString(R.string.join_folder_cancelled)); return@registerForActivityResult }
+        // 허용을 기억해 같은 폴더는 다음부터 묻지 않음
+        runCatching { contentResolver.takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        lifecycleScope.launch {
+            val found = withContext(Dispatchers.IO) { PartFinder.findInTree(applicationContext, tree, base) }
+            if (found == null) snack(getString(R.string.join_err_not_in_folder, base)) else requestJoin(found)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -337,6 +355,30 @@ class MainActivity : AppCompatActivity() {
             return
         }
         join(uris)
+    }
+
+    /** 조각 하나에서 나머지를 찾아 합침. 못 찾으면 그 폴더 접근을 한 번 허용받음 */
+    private fun findAndJoin(picked: Uri) {
+        if (busy) return
+        binding.progress.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            val result = try {
+                withContext(Dispatchers.IO) { PartFinder.find(applicationContext, picked) }
+            } catch (p: PartFiles.Problem) {
+                snack(problemText(p)); null
+            } finally {
+                if (!busy) binding.progress.visibility = View.GONE
+            }
+            when (result) {
+                is PartFinder.Result.Found -> requestJoin(result.uris)
+                is PartFinder.Result.NeedFolder -> {
+                    pendingBase = result.base
+                    snack(getString(R.string.join_need_folder))
+                    pickFolder.launch(result.initialFolder)
+                }
+                null -> Unit
+            }
+        }
     }
 
     private fun join(uris: List<Uri>) = runTask(getString(R.string.joining)) {
