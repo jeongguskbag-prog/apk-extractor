@@ -217,9 +217,9 @@ class MainActivity : AppCompatActivity() {
             R.id.sel_clear -> clearSelection()
             R.id.action_join -> {
                 if (!busy) {
-                    val last = prefs.getString("join_folder", null)?.let(Uri::parse)
-                    snack(getString(R.string.join_pick_folder))
-                    pickFolder.launch(last?.let(PartFinder::startOf) ?: PartFinder.DEFAULT_FOLDER)
+                    // 허용받은 폴더가 있으면 바로 .001 목록, 없으면 처음 한 번만 폴더 고르기
+                    val folder = savedFolder()
+                    if (folder != null) showParts(folder) else chooseFolder()
                 }
             }
             R.id.action_split_large -> {
@@ -344,6 +344,18 @@ class MainActivity : AppCompatActivity() {
         join(uris)
     }
 
+    /** 지난번 고른 폴더 (허용이 아직 살아 있을 때만) */
+    private fun savedFolder(): Uri? {
+        val saved = prefs.getString("join_folder", null)?.let(Uri::parse) ?: return null
+        return saved.takeIf { s -> contentResolver.persistedUriPermissions.any { it.uri == s && it.isReadPermission } }
+    }
+
+    /** 안드로이드 폴더 선택 화면 (이름으로 거를 수 없어 모든 파일이 보임 → 폴더만 고르는 용도) */
+    private fun chooseFolder() {
+        snack(getString(R.string.join_pick_folder))
+        pickFolder.launch(savedFolder()?.let(PartFinder::startOf) ?: PartFinder.DEFAULT_FOLDER)
+    }
+
     /** 고른 폴더를 다음에 다시 열 수 있게 기억 (예전에 허용받은 다른 폴더는 놓아 줌) */
     private fun rememberFolder(tree: Uri) {
         runCatching { contentResolver.takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
@@ -364,23 +376,23 @@ class MainActivity : AppCompatActivity() {
                 if (!busy) binding.progress.visibility = View.GONE
             }
             if (isFinishing || isDestroyed) return@launch
+            val dialog = MaterialAlertDialogBuilder(this@MainActivity)
+                .setTitle(getString(R.string.join_title, PartFinder.folderLabel(tree)))
+                .setNeutralButton(R.string.join_other_folder) { _, _ -> chooseFolder() }
+                .setNegativeButton(android.R.string.cancel, null)
             if (groups.isEmpty()) {
-                snack(getString(R.string.join_none_in_folder, PartFinder.folderLabel(tree)))
+                dialog.setMessage(getString(R.string.join_none_in_folder, PartFinder.folderLabel(tree))).show()
                 return@launch
             }
             val labels = groups.map { g ->
                 if (g.complete) getString(R.string.join_item, g.firstName, g.parts.size)
                 else getString(R.string.join_item_incomplete, g.firstName)
             }.toTypedArray()
-            MaterialAlertDialogBuilder(this@MainActivity)
-                .setTitle(getString(R.string.join_title, PartFinder.folderLabel(tree)))
-                .setItems(labels) { _, i ->
-                    val g = groups[i]
-                    if (g.complete) requestJoin(g.parts)
-                    else snack(getString(R.string.join_err_missing, g.missing.joinToString(", ") { String.format(java.util.Locale.ROOT, "%03d", it) }))
-                }
-                .setNegativeButton(android.R.string.cancel, null)
-                .show()
+            dialog.setItems(labels) { _, i ->
+                val g = groups[i]
+                if (g.complete) requestJoin(g.parts)
+                else snack(getString(R.string.join_err_missing, g.missing.joinToString(", ") { String.format(java.util.Locale.ROOT, "%03d", it) }))
+            }.show()
         }
     }
 

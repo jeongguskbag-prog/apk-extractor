@@ -43,7 +43,8 @@
     <string name="join_err_not_part">%1$s is not a part file (.001, .002 …).</string>
     <string name="join_err_mixed">Parts of different files are mixed: %1$s</string>
     <string name="join_err_duplicate">The same part was selected twice: %1$s</string>
-    <string name="join_pick_folder">Choose the folder with the parts, then tap \"Use this folder\".</string>
+    <string name="join_pick_folder">Choose the folder with the parts, once. This Android screen shows every file, but after you tap \"Use this folder\" ApkVault lists only the .001 files.</string>
+    <string name="join_other_folder">Other folder</string>
     <string name="join_title">Choose a file to join (.001)\n%1$s</string>
     <string name="join_none_in_folder">No first parts (.001) to join in %1$s.</string>
     <string name="join_item">%1$s\n%2$d parts · tap to join</string>

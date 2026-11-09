@@ -43,7 +43,8 @@
     <string name="join_err_not_part">%1$s 은(는) 조각 파일(.001, .002 …)이 아니에요.</string>
     <string name="join_err_mixed">서로 다른 파일의 조각이 섞여 있어요: %1$s</string>
     <string name="join_err_duplicate">같은 번호의 조각이 두 번 선택됐어요: %1$s</string>
-    <string name="join_pick_folder">조각 파일이 있는 폴더를 고르고 \"이 폴더 사용\"을 눌러 주세요.</string>
+    <string name="join_pick_folder">처음 한 번만 조각이 있는 폴더를 골라 주세요. 이 화면은 안드로이드 화면이라 다른 파일도 보이지만, 폴더를 고르면(\"이 폴더 사용\") 그다음부터는 .001 파일만 목록으로 보여요.</string>
+    <string name="join_other_folder">다른 폴더</string>
     <string name="join_title">합칠 파일 고르기 (.001)\n%1$s</string>
     <string name="join_none_in_folder">%1$s 폴더에 합칠 조각(.001)이 없어요.</string>
     <string name="join_item">%1$s\n조각 %2$d개 · 눌러서 합치기</string>
