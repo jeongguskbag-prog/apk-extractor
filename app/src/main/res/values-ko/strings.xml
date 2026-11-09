@@ -21,7 +21,7 @@
     <string name="share_failed">공유 준비 실패: %1$s</string>
     <string name="share_title">%1$s 공유</string>
     <string name="storage_permission_needed">이 안드로이드 버전에서는 파일 저장에 저장소 권한이 필요합니다.</string>
-    <string name="about_text">설치된 앱을 APK(단일) 또는 XAPK(분할 앱)로 추출합니다. 광고·통계·인터넷 권한이 없어 공유하지 않는 한 파일이 기기 밖으로 나가지 않습니다.\n\n앱을 길게 누르면 여러 앱을 골라 한꺼번에 저장하거나 공유할 수 있습니다.\n\n메뉴의 \"큰 파일 30MB씩 나눠 저장\"을 켜면 큰 파일을 .001, .002 … 조각으로 나눠 저장하고, \"조각 합치기\"로 첫 조각(.001)을 골라 원래 파일로 되돌릴 수 있습니다.</string>
+    <string name="about_text">설치된 앱을 APK(단일) 또는 XAPK(분할 앱)로 추출합니다. 광고·통계·인터넷 권한이 없어 공유하지 않는 한 파일이 기기 밖으로 나가지 않습니다.\n\n앱을 길게 누르면 여러 앱을 골라 한꺼번에 저장하거나 공유할 수 있습니다.\n\n메뉴의 \"큰 파일 30MB씩 나눠 저장\"을 켜면 큰 파일을 .001, .002 … 조각으로 나눠 저장합니다. Claude 같은 AI 채팅 앱은 파일 하나에 30MB 까지만 올릴 수 있어, 큰 앱도 조각으로 나눠 올려 분석을 맡길 수 있습니다. \"조각 합치기\"로 첫 조각(.001)을 고르면 원래 파일로 되돌립니다.</string>
     <string name="ok">확인</string>
     <string name="share_title_multi">앱 %1$d개 공유</string>
     <string name="selection_count">%1$d개 선택</string>
@@ -31,7 +31,7 @@
     <string name="batch_saved">%1$d개 파일을 저장했습니다: %2$s</string>
     <string name="batch_partial">%1$d개 저장, %2$d개 실패 (%3$s)</string>
     <string name="menu_split_large">큰 파일 30MB씩 나눠 저장</string>
-    <string name="split_on">30MB 가 넘는 파일은 30MB 씩 나눠(.001, .002 …) 저장·공유합니다. 받은 쪽에서 7-Zip·반디집으로 합치면 원래 파일이 됩니다.</string>
+    <string name="split_on">30MB 가 넘는 파일은 30MB 씩 나눠(.001, .002 …) 저장·공유합니다. Claude 같은 AI 채팅(파일 하나 30MB 제한)에 올릴 때 쓰세요. 받은 쪽에서 7-Zip·반디집으로 합치면 원래 파일이 됩니다.</string>
     <string name="split_off">파일을 나누지 않고 통째로 저장·공유합니다.</string>
     <string name="saved_split">%1$s 외: 30MB 씩 %2$d개로 나눠 %3$s 에 저장했습니다</string>
     <string name="batch_split_note">%1$d개는 30MB 씩 나눠 저장</string>
@@ -43,13 +43,12 @@
     <string name="join_err_not_part">%1$s 은(는) 조각 파일(.001, .002 …)이 아니에요.</string>
     <string name="join_err_mixed">서로 다른 파일의 조각이 섞여 있어요: %1$s</string>
     <string name="join_err_duplicate">같은 번호의 조각이 두 번 선택됐어요: %1$s</string>
-    <string name="join_title">합칠 조각 고르기 (.001)</string>
-    <string name="join_none">합칠 조각(.001)을 찾지 못했어요.\n\nApkVault 로 나눠 저장한 조각은 여기 자동으로 보여요. 카톡 등 다른 앱으로 받은 조각은 \"폴더 추가\"로 그 폴더를 한 번 허용해 주세요.</string>
-    <string name="join_add_folder">폴더 추가</string>
-    <string name="join_item">%1$s\n조각 %2$d개 · %3$s</string>
-    <string name="join_item_incomplete">%1$s\n⚠ 빠진 조각 있음 · %2$s</string>
-    <string name="join_where_own">ApkVault 저장</string>
-    <string name="join_folder_added">폴더를 추가했어요. 이 폴더의 조각도 목록에 보여요.</string>
+    <string name="join_pick_folder">처음 한 번만 조각이 있는 폴더를 골라 주세요. 이 화면은 안드로이드 화면이라 다른 파일도 보이지만, 폴더를 고르면(\"이 폴더 사용\") 그다음부터는 .001 파일만 목록으로 보여요.</string>
+    <string name="join_other_folder">다른 폴더</string>
+    <string name="join_title">합칠 파일 고르기 (.001)\n%1$s</string>
+    <string name="join_none_in_folder">%1$s 폴더에 합칠 조각(.001)이 없어요.</string>
+    <string name="join_item">%1$s\n조각 %2$d개 · 눌러서 합치기</string>
+    <string name="join_item_incomplete">%1$s\n⚠ 빠진 조각이 있어 합칠 수 없어요</string>
     <string name="join_err_missing">빠진 조각이 있어요: %1$s. 빠진 조각을 같은 폴더에 넣어 주세요.</string>
     <string name="join_err_incomplete">합친 파일이 완전하지 않아 저장하지 않았어요. 조각이 모두 있는지, 이름·순서가 바뀌지 않았는지 확인해 주세요.</string>
 </resources>

@@ -21,7 +21,7 @@
     <string name="share_failed">Could not prepare share: %1$s</string>
     <string name="share_title">Share %1$s</string>
     <string name="storage_permission_needed">Storage permission is needed to save files on this Android version.</string>
-    <string name="about_text">Extracts installed apps as APK (single) or XAPK (split apps). No ads, no analytics, no internet permission — files never leave your device unless you share them.\n\nLong-press an app to select several and save or share them at once.\n\nTurn on \"Split files over 30 MB\" in the menu to save large files as .001, .002 … parts, and use \"Join split parts\" to pick the first part (.001) and restore the original file.</string>
+    <string name="about_text">Extracts installed apps as APK (single) or XAPK (split apps). No ads, no analytics, no internet permission — files never leave your device unless you share them.\n\nLong-press an app to select several and save or share them at once.\n\nTurn on \"Split files over 30 MB\" in the menu to save large files as .001, .002 … parts. AI chat apps such as Claude accept files of up to 30 MB, so you can upload large apps in parts. Use \"Join split parts\" to pick the first part (.001) and restore the original file.</string>
     <string name="ok">OK</string>
     <string name="share_title_multi">Share %1$d apps</string>
     <string name="selection_count">%1$d selected</string>
@@ -31,7 +31,7 @@
     <string name="batch_saved">Saved %1$d files to %2$s</string>
     <string name="batch_partial">Saved %1$d, failed %2$d (%3$s)</string>
     <string name="menu_split_large">Split files over 30 MB</string>
-    <string name="split_on">Files over 30 MB will be saved and shared in 30 MB parts (.001, .002 …). Join them with 7-Zip or a similar tool.</string>
+    <string name="split_on">Files over 30 MB will be saved and shared in 30 MB parts (.001, .002 …), to fit upload limits such as the 30 MB per file in AI chat apps like Claude. Join them with 7-Zip or a similar tool.</string>
     <string name="split_off">Files are saved and shared whole.</string>
     <string name="saved_split">Saved %1$s and more: %2$d parts of 30 MB in %3$s</string>
     <string name="batch_split_note">%1$d split into 30 MB parts</string>
@@ -43,13 +43,12 @@
     <string name="join_err_not_part">%1$s is not a part file (.001, .002 …).</string>
     <string name="join_err_mixed">Parts of different files are mixed: %1$s</string>
     <string name="join_err_duplicate">The same part was selected twice: %1$s</string>
-    <string name="join_title">Choose parts to join (.001)</string>
-    <string name="join_none">No first parts (.001) found.\n\nParts saved by ApkVault appear here automatically. For parts received in other apps, tap \"Add folder\" to allow that folder once.</string>
-    <string name="join_add_folder">Add folder</string>
-    <string name="join_item">%1$s\n%2$d parts · %3$s</string>
-    <string name="join_item_incomplete">%1$s\n⚠ Parts missing · %2$s</string>
-    <string name="join_where_own">Saved by ApkVault</string>
-    <string name="join_folder_added">Folder added. Parts in it now appear in the list.</string>
+    <string name="join_pick_folder">Choose the folder with the parts, once. This Android screen shows every file, but after you tap \"Use this folder\" ApkVault lists only the .001 files.</string>
+    <string name="join_other_folder">Other folder</string>
+    <string name="join_title">Choose a file to join (.001)\n%1$s</string>
+    <string name="join_none_in_folder">No first parts (.001) to join in %1$s.</string>
+    <string name="join_item">%1$s\n%2$d parts · tap to join</string>
+    <string name="join_item_incomplete">%1$s\n⚠ Parts missing, can\'t join</string>
     <string name="join_err_missing">Missing parts: %1$s. Put them in the same folder.</string>
     <string name="join_err_incomplete">The joined file is incomplete. Check that every part is there and none were renamed or swapped. Nothing was saved.</string>
 </resources>

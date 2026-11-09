@@ -69,13 +69,11 @@ class MainActivity : AppCompatActivity() {
     // 조각 합치기: 합칠 조각(.001) 목록은 앱이 직접 찾아 보여 줌
     private var pendingJoin: List<Uri> = emptyList()
 
-    // 다른 앱으로 받은 조각이 있는 폴더를 한 번 허용받음 (앱이 기억)
-    private val addFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
-        if (tree != null) {
-            runCatching { contentResolver.takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-            snack(getString(R.string.join_folder_added))
-        }
-        showParts()
+    // 조각이 있는 폴더를 고름 → 그 폴더의 .001 만 목록으로
+    private val pickFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
+        if (tree == null) return@registerForActivityResult
+        rememberFolder(tree)
+        showParts(tree)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -218,7 +216,11 @@ class MainActivity : AppCompatActivity() {
             R.id.sel_all -> selectAllVisible()
             R.id.sel_clear -> clearSelection()
             R.id.action_join -> {
-                showParts()
+                if (!busy) {
+                    // 허용받은 폴더가 있으면 바로 .001 목록, 없으면 처음 한 번만 폴더 고르기
+                    val folder = savedFolder()
+                    if (folder != null) showParts(folder) else chooseFolder()
+                }
             }
             R.id.action_split_large -> {
                 splitLarge = !item.isChecked
@@ -342,37 +344,55 @@ class MainActivity : AppCompatActivity() {
         join(uris)
     }
 
-    /** 찾은 조각 묶음 중 첫 조각(.001)만 목록으로 보여 줌. 고르면 나머지까지 합침 */
-    private fun showParts() {
+    /** 지난번 고른 폴더 (허용이 아직 살아 있을 때만) */
+    private fun savedFolder(): Uri? {
+        val saved = prefs.getString("join_folder", null)?.let(Uri::parse) ?: return null
+        return saved.takeIf { s -> contentResolver.persistedUriPermissions.any { it.uri == s && it.isReadPermission } }
+    }
+
+    /** 안드로이드 폴더 선택 화면 (이름으로 거를 수 없어 모든 파일이 보임 → 폴더만 고르는 용도) */
+    private fun chooseFolder() {
+        snack(getString(R.string.join_pick_folder))
+        pickFolder.launch(savedFolder()?.let(PartFinder::startOf) ?: PartFinder.DEFAULT_FOLDER)
+    }
+
+    /** 고른 폴더를 다음에 다시 열 수 있게 기억 (예전에 허용받은 다른 폴더는 놓아 줌) */
+    private fun rememberFolder(tree: Uri) {
+        runCatching { contentResolver.takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        for (old in contentResolver.persistedUriPermissions) {
+            if (old.uri != tree) runCatching { contentResolver.releasePersistableUriPermission(old.uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        }
+        prefs.edit().putString("join_folder", tree.toString()).apply()
+    }
+
+    /** 고른 폴더의 조각 묶음 중 첫 조각(.001)만 목록으로 보여 줌. 고르면 나머지까지 합침 */
+    private fun showParts(tree: Uri) {
         if (busy) return
         binding.progress.visibility = View.VISIBLE
         lifecycleScope.launch {
-            val found = try {
-                withContext(Dispatchers.IO) { PartFinder.scan(applicationContext) }
+            val groups = try {
+                withContext(Dispatchers.IO) { PartFinder.scan(applicationContext, tree) }
             } finally {
                 if (!busy) binding.progress.visibility = View.GONE
             }
             if (isFinishing || isDestroyed) return@launch
             val dialog = MaterialAlertDialogBuilder(this@MainActivity)
-                .setTitle(R.string.join_title)
-                .setNeutralButton(R.string.join_add_folder) { _, _ -> addFolder.launch(null) }
+                .setTitle(getString(R.string.join_title, PartFinder.folderLabel(tree)))
+                .setNeutralButton(R.string.join_other_folder) { _, _ -> chooseFolder() }
                 .setNegativeButton(android.R.string.cancel, null)
-            if (found.isEmpty()) {
-                dialog.setMessage(R.string.join_none)
-            } else {
-                val labels = found.map { f ->
-                    val where = f.folder ?: getString(R.string.join_where_own)
-                    val g = f.group
-                    if (g.complete) getString(R.string.join_item, g.firstName, g.parts.size, where)
-                    else getString(R.string.join_item_incomplete, g.firstName, where)
-                }.toTypedArray()
-                dialog.setItems(labels) { _, i ->
-                    val g = found[i].group
-                    if (g.complete) requestJoin(g.parts)
-                    else snack(getString(R.string.join_err_missing, g.missing.joinToString(", ") { String.format(java.util.Locale.ROOT, "%03d", it) }))
-                }
+            if (groups.isEmpty()) {
+                dialog.setMessage(getString(R.string.join_none_in_folder, PartFinder.folderLabel(tree))).show()
+                return@launch
             }
-            dialog.show()
+            val labels = groups.map { g ->
+                if (g.complete) getString(R.string.join_item, g.firstName, g.parts.size)
+                else getString(R.string.join_item_incomplete, g.firstName)
+            }.toTypedArray()
+            dialog.setItems(labels) { _, i ->
+                val g = groups[i]
+                if (g.complete) requestJoin(g.parts)
+                else snack(getString(R.string.join_err_missing, g.missing.joinToString(", ") { String.format(java.util.Locale.ROOT, "%03d", it) }))
+            }.show()
         }
     }
 
