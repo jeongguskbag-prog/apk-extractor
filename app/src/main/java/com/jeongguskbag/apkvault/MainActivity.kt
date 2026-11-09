@@ -66,28 +66,16 @@ class MainActivity : AppCompatActivity() {
         if (parts.isNotEmpty()) join(parts)
     }
 
-    // 조각 합치기: 조각 파일(.001, .002 …)을 여러 개 고름
+    // 조각 합치기: 합칠 조각(.001) 목록은 앱이 직접 찾아 보여 줌
     private var pendingJoin: List<Uri> = emptyList()
-    private val pickParts = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        when {
-            uris.size == 1 -> findAndJoin(uris[0]) // 하나만 골랐으면 나머지 조각을 찾아서
-            uris.isNotEmpty() -> requestJoin(uris)
-        }
-    }
 
-    // 나머지 조각을 찾으려고 폴더 접근을 허용받을 때
-    private var pendingBase: String? = null
-    private val pickFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
-        val base = pendingBase
-        pendingBase = null
-        if (base == null) return@registerForActivityResult
-        if (tree == null) { snack(getString(R.string.join_folder_cancelled)); return@registerForActivityResult }
-        // 허용을 기억해 같은 폴더는 다음부터 묻지 않음
-        runCatching { contentResolver.takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-        lifecycleScope.launch {
-            val found = withContext(Dispatchers.IO) { PartFinder.findInTree(applicationContext, tree, base) }
-            if (found == null) snack(getString(R.string.join_err_not_in_folder, base)) else requestJoin(found)
+    // 다른 앱으로 받은 조각이 있는 폴더를 한 번 허용받음 (앱이 기억)
+    private val addFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
+        if (tree != null) {
+            runCatching { contentResolver.takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            snack(getString(R.string.join_folder_added))
         }
+        showParts()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -230,10 +218,7 @@ class MainActivity : AppCompatActivity() {
             R.id.sel_all -> selectAllVisible()
             R.id.sel_clear -> clearSelection()
             R.id.action_join -> {
-                if (!busy) {
-                    snack(getString(R.string.join_hint))
-                    pickParts.launch(arrayOf("*/*"))
-                }
+                showParts()
             }
             R.id.action_split_large -> {
                 splitLarge = !item.isChecked
@@ -357,27 +342,37 @@ class MainActivity : AppCompatActivity() {
         join(uris)
     }
 
-    /** 조각 하나에서 나머지를 찾아 합침. 못 찾으면 그 폴더 접근을 한 번 허용받음 */
-    private fun findAndJoin(picked: Uri) {
+    /** 찾은 조각 묶음 중 첫 조각(.001)만 목록으로 보여 줌. 고르면 나머지까지 합침 */
+    private fun showParts() {
         if (busy) return
         binding.progress.visibility = View.VISIBLE
         lifecycleScope.launch {
-            val result = try {
-                withContext(Dispatchers.IO) { PartFinder.find(applicationContext, picked) }
-            } catch (p: PartFiles.Problem) {
-                snack(problemText(p)); null
+            val found = try {
+                withContext(Dispatchers.IO) { PartFinder.scan(applicationContext) }
             } finally {
                 if (!busy) binding.progress.visibility = View.GONE
             }
-            when (result) {
-                is PartFinder.Result.Found -> requestJoin(result.uris)
-                is PartFinder.Result.NeedFolder -> {
-                    pendingBase = result.base
-                    snack(getString(R.string.join_need_folder))
-                    pickFolder.launch(result.initialFolder)
+            if (isFinishing || isDestroyed) return@launch
+            val dialog = MaterialAlertDialogBuilder(this@MainActivity)
+                .setTitle(R.string.join_title)
+                .setNeutralButton(R.string.join_add_folder) { _, _ -> addFolder.launch(null) }
+                .setNegativeButton(android.R.string.cancel, null)
+            if (found.isEmpty()) {
+                dialog.setMessage(R.string.join_none)
+            } else {
+                val labels = found.map { f ->
+                    val where = f.folder ?: getString(R.string.join_where_own)
+                    val g = f.group
+                    if (g.complete) getString(R.string.join_item, g.firstName, g.parts.size, where)
+                    else getString(R.string.join_item_incomplete, g.firstName, where)
+                }.toTypedArray()
+                dialog.setItems(labels) { _, i ->
+                    val g = found[i].group
+                    if (g.complete) requestJoin(g.parts)
+                    else snack(getString(R.string.join_err_missing, g.missing.joinToString(", ") { String.format(java.util.Locale.ROOT, "%03d", it) }))
                 }
-                null -> Unit
             }
+            dialog.show()
         }
     }
 

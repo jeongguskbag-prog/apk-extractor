@@ -60,6 +60,22 @@ object PartFiles {
         return mine.map { it.first to it.second }
     }
 
+    /** 한 파일의 조각 묶음: 첫 조각 이름(…001), 번호순 항목, 001 부터 빠짐없는지 */
+    class Group<T>(val base: String, val firstName: String, val parts: List<T>, val complete: Boolean, val missing: List<Int>)
+
+    /** 폴더 목록(항목, 이름)에서 조각 파일만 골라 파일별로 묶음. 001 이 있는 묶음만, 이름순 */
+    fun <T> groups(items: List<Pair<T, String>>): List<Group<T>> =
+        items.mapNotNull { (item, name) -> parse(name)?.let { Triple(item, it.first, it.second) } }
+            .groupBy { it.second }
+            .mapNotNull { (base, list) ->
+                val byNumber = list.distinctBy { it.third }.sortedBy { it.third }
+                if (byNumber.first().third != 1) return@mapNotNull null // 001 이 없으면 목록에 안 보임
+                val numbers = byNumber.map { it.third }
+                val missing = (1..numbers.last()).filter { it !in numbers }
+                Group(base, String.format(java.util.Locale.ROOT, "%s.%03d", base, 1), byNumber.map { it.first }, missing.isEmpty(), missing)
+            }
+            .sortedBy { it.base.lowercase() }
+
     /**
      * OK: 완전함 / NOT_ZIP: ZIP 이 아님(첫 조각이 아닌 걸로 시작 등) / INCOMPLETE: 구조가 어긋남(조각 빠짐·더해짐·순서) /
      * CORRUPT: 구조는 맞지만 내용 CRC 오류(다른 파일 조각이 섞임 등) / UNKNOWN: 4GB 넘는 ZIP64 라 검사 못 함

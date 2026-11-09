@@ -122,6 +122,21 @@ class PartFilesTest {
         assertEquals(listOf("a", "b"), PartFiles.siblings("카톡_10.8.xapk", tricky)!!.map { it.first })
     }
 
+    @Test fun groupsOnlyFilesWithAFirstPart() {
+        val folder = listOf(
+            "b2" to "b.apk.002", "a1" to "a.xapk.001", "a2" to "a.xapk.002",
+            "b1" to "b.apk.001", "b4" to "b.apk.004", "c2" to "c.xapk.002", "p" to "photo.jpg",
+        )
+        val g = PartFiles.groups(folder)
+        assertEquals(listOf("a.xapk", "b.apk"), g.map { it.base }) // c 는 001 이 없어 빠짐, 사진도 빠짐
+        assertEquals("a.xapk.001", g[0].firstName)
+        assertEquals(listOf("a1", "a2"), g[0].parts)
+        assert(g[0].complete)
+        assertEquals(listOf("b1", "b2", "b4"), g[1].parts)
+        assert(!g[1].complete)
+        assertEquals(listOf(3), g[1].missing)
+    }
+
     @Test fun zipNames() {
         assert(PartFiles.isZipName("a.xapk"))
         assert(PartFiles.isZipName("A.APK"))

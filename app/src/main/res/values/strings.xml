@@ -36,7 +36,6 @@
     <string name="saved_split">Saved %1$s and more: %2$d parts of 30 MB in %3$s</string>
     <string name="batch_split_note">%1$d split into 30 MB parts</string>
     <string name="menu_join">Join split parts</string>
-    <string name="join_hint">Pick one part (.001, .002 …); ApkVault finds the rest. You can also select them all.</string>
     <string name="joining">Joining parts…</string>
     <string name="join_done">Joined %1$s from %2$d parts in %3$s</string>
     <string name="join_done_unverified">Joined %1$s from %2$d parts in %3$s (over 4 GB, so it could not be checked)</string>
@@ -44,9 +43,13 @@
     <string name="join_err_not_part">%1$s is not a part file (.001, .002 …).</string>
     <string name="join_err_mixed">Parts of different files are mixed: %1$s</string>
     <string name="join_err_duplicate">The same part was selected twice: %1$s</string>
-    <string name="join_err_missing">Missing parts: %1$s. Select all of them.</string>
+    <string name="join_title">Choose parts to join (.001)</string>
+    <string name="join_none">No first parts (.001) found.\n\nParts saved by ApkVault appear here automatically. For parts received in other apps, tap \"Add folder\" to allow that folder once.</string>
+    <string name="join_add_folder">Add folder</string>
+    <string name="join_item">%1$s\n%2$d parts · %3$s</string>
+    <string name="join_item_incomplete">%1$s\n⚠ Parts missing · %2$s</string>
+    <string name="join_where_own">Saved by ApkVault</string>
+    <string name="join_folder_added">Folder added. Parts in it now appear in the list.</string>
+    <string name="join_err_missing">Missing parts: %1$s. Put them in the same folder.</string>
     <string name="join_err_incomplete">The joined file is incomplete. Check that every part is there and none were renamed or swapped. Nothing was saved.</string>
-    <string name="join_need_folder">To find the other parts, allow access to the folder they are in, once. ApkVault will remember it.</string>
-    <string name="join_folder_cancelled">Folder access was not allowed. Select all the parts instead.</string>
-    <string name="join_err_not_in_folder">Could not find every part of %1$s in that folder. Choose the folder that holds all the parts.</string>
 </resources>
