@@ -118,21 +118,91 @@ object Extractor {
         null
     }
 
-    /** 다운로드/ApkExtractor 에 저장하고, 사용자에게 보여줄 경로를 돌려줌. 백그라운드 스레드에서 호출 */
-    fun saveToDownloads(context: Context, app: AppEntry): String {
+    /** 나눠 저장할 때 한 조각의 크기 (30MB) */
+    const val PART_SIZE = 30L * 1024 * 1024
+    private const val MIME_PART = "application/octet-stream"
+
+    /** 저장·공유 결과: 만든 파일(조각) 이름들과 보여줄 경로 */
+    class Saved(val names: List<String>, val firstPath: String) {
+        val parts: Int get() = names.size
+    }
+
+    /** 파일 내용 중 [offset, offset+length) 만 out 에 복사 */
+    private fun copyRange(file: File, offset: Long, length: Long, out: OutputStream) {
+        FileInputStream(file).use { input ->
+            var skip = offset
+            while (skip > 0) {
+                val n = input.skip(skip)
+                if (n <= 0) throw IllegalStateException("skip failed")
+                skip -= n
+            }
+            val buf = ByteArray(64 * 1024)
+            var left = length
+            while (left > 0) {
+                val n = input.read(buf, 0, minOf(buf.size.toLong(), left).toInt())
+                if (n < 0) throw IllegalStateException("unexpected end of file")
+                out.write(buf, 0, n)
+                left -= n
+            }
+        }
+    }
+
+    /** 나눠 저장이 필요한지 보려고 먼저 앱 캐시에 완성 파일을 만듦 */
+    private fun buildTemp(context: Context, app: AppEntry): File {
+        val dir = File(context.cacheDir, "build")
+        if (!dir.isDirectory && !dir.mkdirs()) throw IllegalStateException("Cannot create build cache")
+        val file = File(dir, fileName(app))
+        FileOutputStream(file).use { writeTo(context, app, it) }
+        return file
+    }
+
+    /** 조각 이름: 이름.xapk.001, 이름.xapk.002 … (7-Zip·반디집 분할 파일과 같은 방식) */
+    private fun partName(name: String, index: Int) = String.format(java.util.Locale.ROOT, "%s.%03d", name, index + 1)
+    private fun partCount(size: Long) = ((size + PART_SIZE - 1) / PART_SIZE).toInt()
+
+    /**
+     * 다운로드/ApkExtractor 에 저장. 백그라운드 스레드에서 호출.
+     * split 이 켜져 있고 30MB 를 넘으면 30MB 씩 나눠 여러 파일로 저장.
+     */
+    fun saveToDownloads(context: Context, app: AppEntry, split: Boolean = false): Saved {
         val name = fileName(app)
+        if (!split) {
+            val path = saveOne(context, name, mime(app)) { writeTo(context, app, it) }
+            return Saved(listOf(path.substringAfterLast('/')), path)
+        }
+        val temp = buildTemp(context, app)
+        try {
+            val size = temp.length()
+            if (size <= PART_SIZE) {
+                val path = saveOne(context, name, mime(app)) { out -> copyRange(temp, 0, size, out) }
+                return Saved(listOf(path.substringAfterLast('/')), path)
+            }
+            val paths = ArrayList<String>()
+            for (i in 0 until partCount(size)) {
+                val offset = i * PART_SIZE
+                val length = minOf(PART_SIZE, size - offset)
+                paths.add(saveOne(context, partName(name, i), MIME_PART) { out -> copyRange(temp, offset, length, out) })
+            }
+            return Saved(paths.map { it.substringAfterLast('/') }, paths.first())
+        } finally {
+            temp.delete()
+        }
+    }
+
+    /** 파일 하나를 다운로드/ApkExtractor 에 쓰고, 사용자에게 보여줄 경로를 돌려줌 */
+    private fun saveOne(context: Context, name: String, mimeType: String, write: (OutputStream) -> Unit): String {
         if (Build.VERSION.SDK_INT >= 29) {
             val resolver = context.contentResolver
             val values = ContentValues().apply {
                 put(MediaStore.Downloads.DISPLAY_NAME, name)
-                put(MediaStore.Downloads.MIME_TYPE, mime(app))
+                put(MediaStore.Downloads.MIME_TYPE, mimeType)
                 put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/$FOLDER")
                 put(MediaStore.Downloads.IS_PENDING, 1)
             }
             val uri: Uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
                 ?: throw IllegalStateException("Cannot create file in Downloads")
             try {
-                resolver.openOutputStream(uri)?.use { writeTo(context, app, it) }
+                resolver.openOutputStream(uri)?.use { write(it) }
                     ?: throw IllegalStateException("Cannot open output stream")
                 resolver.update(uri, ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }, null, null)
             } catch (e: Exception) {
@@ -155,7 +225,7 @@ object Extractor {
             n++
         }
         try {
-            FileOutputStream(file).use { writeTo(context, app, it) }
+            FileOutputStream(file).use { write(it) }
         } catch (e: Exception) {
             file.delete()
             throw e
@@ -165,21 +235,36 @@ object Extractor {
 
     /**
      * 공유용 파일을 앱 캐시에 만들고 공유 Intent 를 돌려줌. 백그라운드 스레드에서 호출.
-     * 여러 앱이면 ACTION_SEND_MULTIPLE 로 한 번에 보냄. onProgress(완료 개수) 로 진행 상황을 알림
+     * 여러 파일이면 ACTION_SEND_MULTIPLE 로 한 번에 보냄. split 이 켜져 있으면 30MB 넘는 파일은 조각으로 나눠 보냄.
+     * onProgress(완료한 앱 개수) 로 진행 상황을 알림
      */
-    fun prepareShare(context: Context, apps: List<AppEntry>, onProgress: (Int) -> Unit = {}): Intent {
+    fun prepareShare(context: Context, apps: List<AppEntry>, split: Boolean = false, onProgress: (Int) -> Unit = {}): Intent {
         require(apps.isNotEmpty())
         val dir = File(context.cacheDir, "share")
         dir.deleteRecursively()
         if (!dir.mkdirs()) throw IllegalStateException("Cannot create share cache")
         val used = HashSet<String>()
-        val uris = ArrayList<Uri>()
+        val files = ArrayList<File>()
+        var anyPart = false
         apps.forEachIndexed { i, app ->
             val file = File(dir, uniqueName(fileName(app), used))
             FileOutputStream(file).use { writeTo(context, app, it) }
-            uris.add(FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file))
+            val size = file.length()
+            if (split && size > PART_SIZE) {
+                for (k in 0 until partCount(size)) {
+                    val offset = k * PART_SIZE
+                    val part = File(dir, partName(file.name, k))
+                    FileOutputStream(part).use { out -> copyRange(file, offset, minOf(PART_SIZE, size - offset), out) }
+                    files.add(part)
+                }
+                file.delete()
+                anyPart = true
+            } else {
+                files.add(file)
+            }
             onProgress(i + 1)
         }
+        val uris = ArrayList(files.map { FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it) })
         val send = if (uris.size == 1) {
             Intent(Intent.ACTION_SEND).apply {
                 type = mime(apps[0])
@@ -187,7 +272,7 @@ object Extractor {
             }
         } else {
             Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-                type = if (apps.all { !it.isSplit }) MIME_APK else "*/*"
+                type = if (!anyPart && apps.all { !it.isSplit }) MIME_APK else "*/*"
                 putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
             }
         }

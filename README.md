@@ -5,12 +5,14 @@
 - 단일 APK 앱 → `.apk`
 - 분할 앱(base + split) → `.xapk` (ZIP 안에 각 APK, `manifest.json`, `icon.png`)
 - 저장 위치: `다운로드/ApkExtractor/` · 공유 메뉴로 바로 보내기도 가능
+- 큰 파일 나눠 저장(메뉴 옵션): 30MB 넘는 파일을 `이름.xapk.001`, `.002` … 로 30MB 씩 나눠 저장·공유 — 7-Zip·반디집의 "파일 합치기" 또는 윈도우 `copy /b 이름.xapk.001+이름.xapk.002 이름.xapk` 로 원래 파일 복원
 - 여러 앱 한꺼번에: 앱을 길게 눌러 선택 모드 → 모두 선택 · 저장 · 공유 (하나가 실패해도 나머지는 계속)
 - **광고·통계·서버 연결 없음. 인터넷 권한 자체가 없음**
 
 ## 아이콘
 - 앱: 적응형 아이콘(`drawable-anydpi-v26/ic_launcher.xml`) — 배경 `#1A56DB`, 금고 + 다이얼 속 아래 화살표, 안드로이드 13 테마(단색) 아이콘 포함
 - Play 스토어용 512×512: `store/icon-512.png` · 모양별 미리보기: `store/icon-preview.png`
+- Play 그래픽 이미지 1024×500 (24비트 PNG): `store/feature-graphic-ko.png`, `store/feature-graphic-en.png`
 
 ## 권한
 | 권한 | 이유 |
