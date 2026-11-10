@@ -67,6 +67,7 @@ Actions 실행 화면의 Artifacts 에 `ApkExtractor-debug` 로 올립니다. �
 - 주소: https://jeongguskbag-prog.github.io/apk-extractor/privacy/
 
 ## 출시 전 할 일
+- **올리는 순서 전체: `store/PLAY-UPLOAD.md`**
 - 스토어 문구·가격·권한 신고·데이터 보안: `store/LISTING.md`
 - 테스터 12명·14일 비공개 테스트, 프로모션 코드, 모집 글: `store/TESTERS.md`
 - Play Console 에 `QUERY_ALL_PACKAGES` 사용 신고, 데이터 보안 양식(수집 없음)
