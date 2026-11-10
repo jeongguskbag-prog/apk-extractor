@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ApkVault</string>
+    <string name="app_name" translatable="false">ApkVault</string>
     <string name="search_hint">Search apps</string>
     <string name="menu_search">Search</string>
     <string name="menu_show_system">Show system apps</string>
