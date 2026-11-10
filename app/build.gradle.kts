@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.jeongguskbag.apkvault"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.jeongguskbag.apkvault"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 6
         versionName = "0.6.0"
     }
