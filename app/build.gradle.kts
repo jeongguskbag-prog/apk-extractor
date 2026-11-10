@@ -45,6 +45,10 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    // 안드로이드 13+ 설정의 "앱 언어"에 한국어·영어·일본어·중국어(간체) 표시
+    androidResources {
+        generateLocaleConfig = true
+    }
     buildFeatures {
         viewBinding = true
     }
